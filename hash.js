@@ -19,7 +19,7 @@ export class HashMap {
 
     set(key, value) {
         const hashKey = this.hash(key);
-        const bucket = this.buckets[hashKey]
+        const bucket = this.buckets[hashKey];
 
         for (let i = 0; i < bucket.length; i++) {
             if (i < 0 || i >= bucket.length) {
@@ -48,6 +48,11 @@ export class HashMap {
 
     entries() {
         return this.buckets;
+    }
+
+    clear() {
+        this.buckets = Array(this.capacity).fill(null).map(() => []);
+        this.size = 0;
     }
 
     get(key) {

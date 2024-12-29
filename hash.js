@@ -1,3 +1,11 @@
+class Node {
+    constructor(key, value) {
+        this.key = key;
+        this.value = value;
+        this.next = null;
+    }
+}
+
 export class HashMap {
     constructor(initialCapacity = 16, loadFactor = 0.75) {
        this.capacity = initialCapacity;
@@ -10,36 +18,46 @@ export class HashMap {
         let hashCode = 0;
       
         const primeNumber = 31;
-        for (let i = 0; i < key.length; i++) {
+       for (let i = 0; i < key.length; i++) {
           hashCode = primeNumber * hashCode + key.charCodeAt(i);
         }
-     
-        return hashCode % this.capacity;  
+
+        return hashCode % this.capacity;
     }
 
     set(key, value) {
-        const hashKey = this.hash(key);
-        const bucket = this.buckets[hashKey];
+        let hashKey = this.hash(key);
+        let buckets = this.buckets[hashKey];
+        let newNode = new Node(key, value);
 
-        for (let i = 0; i < bucket.length; i++) {
-            if (i < 0 || i >= bucket.length) {
-                throw new Error("Trying to access index out of bounds");
+        if (!buckets) {
+            this.buckets[hashKey] = newNode;
+        } else {
+            let current = buckets;
+            while (current.next && current.key !== key) {
+                current = current.next;
             }
-            // if key at index 0 exists
-            if (bucket[i][0] === key) {
-                // set index 1 as value
-                bucket[i][1] = value;
-                return;
+            if (current.key !== key) current.next = newNode;
+            else current.value = value;
+        }
+
+
+      buckets.forEach(bucket => {
+        if (bucket) {
+            let current = bucket;
+            while (current) {
+                buckets.push([current.key, current.value]);
+                current = current.next;
             }
         }
-        // push key and value into bucket
-        bucket.push([key, value]);
-        this.size++;
+       })
 
         // if length is greater than load factor, double capacity
         if  (this.size / this.capacity > this.loadFactor) {
             this.doubleCapacity();
+            
         }
+        this.size++;
     }
 
     length() {
@@ -48,58 +66,96 @@ export class HashMap {
 
     entries() {
         return this.buckets;
+        /*let arr = [];
+
+        this.buckets.forEach(bucket => {
+           if (bucket) {
+               let current = bucket;
+               while (current) {
+                   arr.push([current.key, current.value]);
+                   current = current.next;
+               }
+           }
+       });
+       //const arrKeys = arr.filter(key => key !== undefined);
+       //return `Keys: ${arrKeys}`;
+       return arr;*/
     }
 
     clear() {
         this.buckets = Array(this.capacity).fill(null).map(() => []);
         this.size = 0;
+        this.head = null;
     }
 
     get(key) {
-        const hashKey = this.hash(key);
-        const bucket = this.buckets[hashKey]
+        let hashKey = this.hash(key);
+        let bucket = this.buckets[hashKey];
 
-        for (let i = 0; i < bucket.length; i++) {
-           if (i < 0 || i >= bucket.length) {
-            throw new Error("Trying to access index out of bounds");
-           }
-           if (bucket[i][0] === key) {
-            // get value
-            return bucket[i][1];
-           }
+        if (bucket) {
+            let current = bucket;
+            while (current.key !== key) {
+                current = current.next;
+            }
+            return current ? current.value : null;
         }
         return null;
     }
 
     keys() {
-         const buckets = this.buckets;    
-         const bucketsArr = buckets.flat().map(array => array[0]);
-         return `Keys: ${bucketsArr}`;
-     }
+         let arr = [];
+
+         this.buckets.forEach(bucket => {
+            if (bucket) {
+                let current = bucket;
+                while (current) {
+                    arr.push(current.key);
+                    current = current.next;
+                }
+            }
+        });
+        const arrKeys = arr.filter(key => key !== undefined);
+        return `Keys: ${arrKeys}`;
+    }
 
      values() {
-        const buckets = this.buckets;    
-        const bucketsArr = buckets.flat().map(array => array[1]);
-        return `Values: ${bucketsArr}`;
+        let arr = [];
+
+         this.buckets.forEach(bucket => {
+            if (bucket) {
+                let current = bucket;
+                while (current) {
+                    arr.push(current.value);
+                    current = current.next;
+                }
+            }
+        });
+        const arrVal = arr.filter(val => val !== undefined);
+        return `Values: ${arrVal}`;
     }
 
     remove(key) {
-        const hashKey = this.hash(key);
-        const bucket = this.buckets[hashKey];
+        let hashKey = this.hash(key);
+        if (this.buckets[hashKey]) {
+            let current = this.buckets[hashKey];
+            let prev = null;
 
-        const index = bucket.indexOf(key);
-
-        for (let i = 0; i < bucket.length; i++) {
-            if (i < 0 || i >= bucket.length) {
-             throw new Error("Trying to access index out of bounds");
+            while (current && current.key !== key) {
+                prev = current;
+                current = current.next;
             }
-            if (bucket[i][0] === key) {
-                bucket.splice(index, 1);
+
+            if (current) {
+                if (prev) {
+                    prev.next = current.next;
+                } else {
+                    this.buckets[hashKey] = null;
+                }
                 this.size--;
-                return true;
+                return true
             }
-         }
-         return false;
+        }
+        return false;
     }
 
 
@@ -108,29 +164,25 @@ export class HashMap {
     }
 
     has(key) {
-        const hashKey = this.hash(key);
-        const bucket = this.buckets[hashKey];
-
-        for (let i = 0; i < bucket.length; i++) {
-            if (i < 0 || i >= bucket.length) {
-                throw new Error("Trying to access index out of bounds");
-            }
-           return `${key} in hash map?: ${bucket[i][0].includes(key)}`;
-        }
-        return false;
+    let hashed = this.hash(key);
+    if (this.buckets[hashed]) {
+      let currentNode = this.buckets[hashed];
+      while (currentNode.key !== key) {
+        currentNode = currentNode.next;
+      }
+      return currentNode ? true : false;
+    }
+    return false;
     }
 
     doubleCapacity() {
-        const newCapactiy = this.capacity * 2;
-        const newBuckets =  Array(this.capacity).fill(null).map(() => []);
-
-        for (const bucket of this.buckets) {
-            for (const [key, value] of bucket) {
-                const newHash = this.hash(key, newCapactiy);
-                newBuckets[newHash].push([key, value]);
-            }
-        }
-        this.capacity = newCapactiy;
-        this.buckets = newBuckets;
+        const oldBuckets = this.entries();
+        this.capacity *= 2;
+        this.buckets = Array(this.capacity).fill(null).map(() => []);
+        this.size = 0; 
+    
+        oldBuckets.forEach(([key, value]) => {
+            this.set(key, value);
+        });
     }
 }

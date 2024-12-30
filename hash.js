@@ -66,20 +66,6 @@ export class HashMap {
 
     entries() {
         return this.buckets;
-        /*let arr = [];
-
-        this.buckets.forEach(bucket => {
-           if (bucket) {
-               let current = bucket;
-               while (current) {
-                   arr.push([current.key, current.value]);
-                   current = current.next;
-               }
-           }
-       });
-       //const arrKeys = arr.filter(key => key !== undefined);
-       //return `Keys: ${arrKeys}`;
-       return arr;*/
     }
 
     clear() {
